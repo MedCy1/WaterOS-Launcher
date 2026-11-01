@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path
+        android:fillColor="#0B0F19"
+        android:pathData="M0,0h320v180h-320z" />
+    <!-- Gradient accent band -->
+    <path
+        android:fillColor="#111827"
+        android:pathData="M0,120h320v60h-320z" />
+    <path
+        android:fillColor="#06B6D4"
+        android:pathData="M0,176h320v4h-320z" />
+    <!-- Center Water Icon -->
+    <path
+        android:fillColor="#06B6D4"
+        android:pathData="M160,40 C160,40 135,75 135,95 C135,108.8 146.2,120 160,120 C173.8,120 185,108.8 185,95 C185,75 160,40 160,40 Z" />
+</vector>

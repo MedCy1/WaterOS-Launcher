@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WaterOS Launcher</string>
+    <string name="accessibility_service_label">WaterOS Home Button Routing</string>
+    <string name="accessibility_service_desc">Ensures instant navigation to WaterOS Launcher when pressing the remote Home button.</string>
+
+    <!-- Navigation Tabs -->
+    <string name="tab_all">Toutes les applications</string>
+    <string name="tab_favorites">Favoris</string>
+    <string name="tab_media">Streaming &amp; Médias</string>
+    <string name="tab_tools">Outils &amp; Système</string>
+
+    <!-- Settings dialog -->
+    <string name="settings_title">Personnalisation WaterOS</string>
+    <string name="theme_selection">Thème visuel</string>
+    <string name="grid_columns">Colonnes de la grille</string>
+    <string name="clock_seconds">Afficher les secondes</string>
+    <string name="app_labels">Afficher les titres des applications</string>
+    <string name="close">Fermer</string>
+</resources>
