@@ -28,9 +28,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,45 +56,110 @@ fun AppCard(
     showLabel: Boolean,
     onLaunch: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onFocusStateChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.08f else 1.0f,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 300f),
-        label = "card_scale"
+
+    // GSAP-style snappy spring physics
+    val cardScale by animateFloatAsState(
+        targetValue = if (isFocused) 1.10f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.65f, stiffness = 280f),
+        label = "card_spring_scale"
+    )
+
+    val iconScale by animateFloatAsState(
+        targetValue = if (isFocused) 1.06f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
+        label = "icon_spring_scale"
     )
 
     val context = LocalContext.current
+    val glowColor = WaterOSTheme.colors.focusGlow
 
     Box(
         modifier = modifier
-            .scale(scale)
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (isFocused) WaterOSTheme.colors.cardFocused else WaterOSTheme.colors.card)
-            .border(
-                width = if (isFocused) 2.5.dp else 1.dp,
-                color = if (isFocused) WaterOSTheme.colors.focusGlow else WaterOSTheme.colors.cardFocused.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(16.dp)
+            .scale(cardScale)
+            .drawBehind {
+                if (isFocused) {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                glowColor.copy(alpha = 0.38f),
+                                glowColor.copy(alpha = 0.12f),
+                                Color.Transparent
+                            ),
+                            radius = size.maxDimension * 0.72f
+                        )
+                    )
+                }
+            }
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                if (isFocused) {
+                    Brush.verticalGradient(
+                        listOf(
+                            WaterOSTheme.colors.cardFocused,
+                            WaterOSTheme.colors.card
+                        )
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.White.copy(alpha = 0.05f),
+                            Color.White.copy(alpha = 0.02f)
+                        )
+                    )
+                }
             )
-            .onFocusChanged { isFocused = it.isFocused }
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = if (isFocused) WaterOSTheme.colors.cardBorderFocused else WaterOSTheme.colors.cardBorderUnfocused,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .onFocusChanged {
+                isFocused = it.isFocused
+                onFocusStateChange(it.isFocused)
+            }
             .focusable()
+            .onKeyEvent { event ->
+                if (event.type == androidx.compose.ui.input.key.KeyEventType.KeyUp &&
+                    (event.key == androidx.compose.ui.input.key.Key.DirectionCenter ||
+                     event.key == androidx.compose.ui.input.key.Key.Enter ||
+                     event.key == androidx.compose.ui.input.key.Key.NumPadEnter)
+                ) {
+                    onLaunch()
+                    true
+                } else if (event.type == androidx.compose.ui.input.key.KeyEventType.KeyDown &&
+                    (event.key == androidx.compose.ui.input.key.Key.Menu ||
+                     event.key == androidx.compose.ui.input.key.Key.MediaPlayPause)
+                ) {
+                    onToggleFavorite()
+                    true
+                } else {
+                    false
+                }
+            }
             .combinedClickable(
                 onClick = onLaunch,
                 onLongClick = onToggleFavorite
             )
-            .padding(16.dp),
+            .padding(vertical = 18.dp, horizontal = 14.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // App Icon
+            // App Icon Container with micro-depth
             Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .size(68.dp)
+                    .scale(iconScale)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        if (isFocused) Color.White.copy(alpha = 0.08f) else Color.Transparent
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
@@ -96,7 +168,7 @@ fun AppCard(
                         .crossfade(true)
                         .build(),
                     contentDescription = app.label,
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(58.dp)
                 )
             }
 
@@ -107,6 +179,7 @@ fun AppCard(
                     color = if (isFocused) WaterOSTheme.colors.textPrimary else WaterOSTheme.colors.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium,
+                    letterSpacing = 0.3.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
@@ -114,14 +187,15 @@ fun AppCard(
             }
         }
 
-        // Favorite Indicator Badge
+        // Star Pin Badge for Favorites
         if (app.isFavorite) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .size(20.dp)
+                    .size(22.dp)
                     .clip(CircleShape)
-                    .background(WaterOSTheme.colors.accentSecondary.copy(alpha = 0.85f)),
+                    .background(WaterOSTheme.colors.accentSecondary.copy(alpha = 0.9f))
+                    .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
